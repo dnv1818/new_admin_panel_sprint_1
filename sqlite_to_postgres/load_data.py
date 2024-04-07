@@ -4,9 +4,14 @@ from dotenv import load_dotenv
 import psycopg2
 from psycopg2.extensions import connection as _connection
 from psycopg2.extras import DictCursor
+from contextlib import closing
 from postgres_saver import PostgresSaver
 from sqlite_extractor import SQLiteExtractor
 from data_classes import *
+
+import logging as log
+
+log.basicConfig(level=log.INFO)
 
 load_dotenv()
 
@@ -35,5 +40,6 @@ if __name__ == '__main__':
         'host': os.environ.get('DB_HOST', 'localhost'),
         'port': os.environ.get('DB_PORT', '5432'),
     }
-    with sqlite3.connect('db.sqlite') as sqlite_conn, psycopg2.connect(**dsl, cursor_factory=DictCursor) as pg_conn:
+    with closing(sqlite3.connect('db.sqlite')) as sqlite_conn, closing(
+            psycopg2.connect(**dsl, cursor_factory=DictCursor)) as pg_conn:
         load_from_sqlite(sqlite_conn, pg_conn)

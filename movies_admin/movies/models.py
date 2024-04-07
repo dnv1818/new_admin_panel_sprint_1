@@ -1,28 +1,11 @@
-import uuid
-import datetime
-
 from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
+from .mixins import TimeStampedMixin, UUIDMixin
 from django.utils.translation import gettext_lazy as _
 
 
-class TimeStampedMixin(models.Model):
-    created = models.DateTimeField(auto_now_add=True)
-    modified = models.DateTimeField(auto_now=True)
-
-    class Meta:
-        abstract = True
-
-
-class UUIDMixin(models.Model):
-    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-
-    class Meta:
-        abstract = True
-
-
 class Genre(UUIDMixin, TimeStampedMixin):
-    name = models.CharField(_('name'), max_length=255)
+    name = models.CharField(_('name'), max_length=255, unique=True)
     description = models.TextField(_('description'), blank=True, null=True)
 
     class Meta:
@@ -34,12 +17,11 @@ class Genre(UUIDMixin, TimeStampedMixin):
         return self.name
 
 
-class FilmworkTypeChoices(models.TextChoices):
-    MOVIE = 'movie', _('Movie')
-    TV_SHOW = 'tv_show', _('TV Show')
-
-
 class Filmwork(UUIDMixin, TimeStampedMixin):
+    class FilmworkTypeChoices(models.TextChoices):
+        MOVIE = 'movie', _('Movie')
+        TV_SHOW = 'tv_show', _('TV Show')
+
     title = models.CharField(_('title'), max_length=255)
     description = models.TextField(_('description'), blank=True, null=True)
     creation_date = models.DateField(_('creation date'), blank=True, null=True)
@@ -87,9 +69,14 @@ class Person(UUIDMixin, TimeStampedMixin):
 
 
 class PersonFilmwork(UUIDMixin):
+    class Role(models.TextChoices):
+        DIRECTOR = 'director', _('Director')
+        WRITER = 'writer', _('Writer')
+        ACTOR = 'actor', _('Actor')
+
     film_work = models.ForeignKey('Filmwork', on_delete=models.CASCADE, verbose_name=_('Filmwork'))
     person = models.ForeignKey('Person', on_delete=models.CASCADE, verbose_name=_('Person'))
-    role = models.CharField(_('role'), max_length=255)
+    role = models.CharField(_('role'), max_length=255, choices=Role.choices)
     created = models.DateTimeField(auto_now_add=True)
 
     class Meta:
